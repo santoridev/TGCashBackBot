@@ -14,7 +14,9 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const adminID int64 = 6022744539
+//sub
+
+const adminID int64 = 1 /// change to your admin id
 
 type UserForm struct {
 	DepositRange  string
@@ -67,8 +69,8 @@ func main() {
 func startHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	kb := &models.ReplyKeyboardMarkup{
 		Keyboard: [][]models.KeyboardButton{
-			{{Text: "от 500 до 999 ₽"}},
-			{{Text: "от 1000 до 1499 ₽"}},
+			{{Text: "от 500 до 1001 ₽"}},
+			{{Text: "от 1001 до 1499 ₽"}},
 			{{Text: "1500+ ₽"}},
 		},
 		ResizeKeyboard:  true,
@@ -80,10 +82,9 @@ func startHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 		"\n\n🎁 анонсы + розыгрыши --> @mlaffon" +
 		"\n\nВыберите, какой депозит вы сделали:"
 
-	// Отправляем медиагруппу (фото + текст в caption первой картинки)
 	mediaGroup := []models.InputMedia{
 		&models.InputMediaPhoto{
-			Media:   "https://i.ibb.co/N2VP8zjx/promo.webp", // <-- сюда свою ссылку/файл
+			Media:   "https://i.ibb.co/N2VP8zjx/promo.webp",
 			Caption: text,
 		},
 	}
@@ -96,7 +97,6 @@ func startHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 		log.Printf("Error sending media group: %v", err)
 	}
 
-	// Клавиатуру надо отправить отдельным сообщением, т.к. у MediaGroup нет ReplyMarkup
 	b.SendMessage(ctx, &bot.SendMessageParams{
 		ChatID:      update.Message.Chat.ID,
 		Text:        "👇 из меню ниже:",
@@ -106,7 +106,6 @@ func startHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	userForms[update.Message.Chat.ID] = &UserForm{Step: 1}
 }
 
-// Выбор возврата: карта или крипта
 func sendReturnTypeButtons(ctx context.Context, b *bot.Bot, chatID int64) {
 	kb := &models.InlineKeyboardMarkup{
 		InlineKeyboard: [][]models.InlineKeyboardButton{
@@ -123,14 +122,12 @@ func sendReturnTypeButtons(ctx context.Context, b *bot.Bot, chatID int64) {
 	})
 }
 
-// Обработка callback кнопок
 func callbackHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	if update.CallbackQuery == nil {
 		return
 	}
 	chatID := update.CallbackQuery.From.ID
 
-	// Обработка кнопки "Ответить пользователю"
 	if strings.HasPrefix(update.CallbackQuery.Data, "reply_") {
 		userIDStr := strings.TrimPrefix(update.CallbackQuery.Data, "reply_")
 		userID, _ := strconv.ParseInt(userIDStr, 10, 64)
@@ -143,18 +140,16 @@ func callbackHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 		})
 		return
 	}
-	// Обработка кнопки "Оплатил ✅"
+
 	if strings.HasPrefix(update.CallbackQuery.Data, "paid_") {
 		userIDStr := strings.TrimPrefix(update.CallbackQuery.Data, "paid_")
 		userID, _ := strconv.ParseInt(userIDStr, 10, 64)
 
-		// Отправляем пользователю уведомление
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: userID,
 			Text:   "✅ Ваша заявка оплачена! 💸 Деньги скоро придут.",
 		})
 
-		// Уведомляем админа, что отметка прошла
 		b.AnswerCallbackQuery(ctx, &bot.AnswerCallbackQueryParams{
 			CallbackQueryID: update.CallbackQuery.ID,
 			Text:            "Заявка отмечена как оплаченная ✅",
@@ -187,7 +182,6 @@ func callbackHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	case "confirm_data":
 		form.Step = 4
 
-		// Примеры фото с текстом в первом
 		mediaGroup := []models.InputMedia{
 			&models.InputMediaPhoto{
 				Media: "https://i.ibb.co/JwNNpKVR/trans.webp",
@@ -211,7 +205,6 @@ func callbackHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 		}
 
 	case "edit_data":
-		// Возвращаем к выбору депозита
 		form.Step = 1
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID: chatID,
@@ -219,8 +212,8 @@ func callbackHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 			ReplyMarkup: &models.ReplyKeyboardMarkup{
 				Keyboard: [][]models.KeyboardButton{
 					// {{Text: "100 - 700 ₽"}},
-					{{Text: "от 500 до 999 ₽"}},
-					{{Text: "от 1000 до 1499 ₽"}},
+					{{Text: "от 500 до 1000 ₽"}},
+					{{Text: "от 1001 до 1499 ₽"}},
 					// {{Text: "1500 - 2000 ₽"}},
 					{{Text: "1500+ ₽"}},
 				},
@@ -235,7 +228,6 @@ func callbackHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	})
 }
 
-// Основной обработчик сообщений
 func messageHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	if update.Message == nil {
 		return
@@ -254,8 +246,8 @@ func messageHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 		var percent string
 		switch form.DepositRange {
-		case "от 500 до 999 ₽":
-			percent = "80%"
+		case "от 500 до 1000 ₽":
+			percent = "70%"
 		case "от 1000 до 1499 ₽":
 			percent = "50%"
 		case "1500+ ₽":
@@ -281,16 +273,15 @@ func messageHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 			return
 		}
 
-		// Проверяем, что сумма соответствует выбранному диапазону
 		valid := false
 		switch form.DepositRange {
-		case "от 500 до 999 ₽":
-			if amount >= 500 && amount <= 999 {
+		case "от 500 до 1000 ₽":
+			if amount >= 500 && amount <= 1000 {
 				valid = true
-				form.Cashback = amount * 80 / 100
+				form.Cashback = amount * 70 / 100
 			}
-		case "от 1000 до 1499 ₽":
-			if amount >= 1000 && amount <= 1499 {
+		case "от 1001 до 1499 ₽":
+			if amount >= 1001 && amount <= 1499 {
 				valid = true
 				form.Cashback = amount * 50 / 100
 			}
@@ -374,7 +365,6 @@ func messageHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 
 		form.ID = id
 
-		// Формируем превью введённых данных
 		preview := "Проверьте введённые данные:\n\n" +
 			"💰 Депозит: " + strconv.Itoa(form.DepositAmount) + " ₽ (" + form.DepositRange + ")\n" +
 			"🎁 Кэшбэк: " + strconv.Itoa(form.Cashback) + " ₽\n" +
@@ -479,7 +469,7 @@ func sendFormToAdmin(ctx context.Context, b *bot.Bot, form *UserForm, userID int
 	}
 
 	if len(form.Photos) > 0 {
-		// Если есть фото — делаем медиагруппу и в первую фотку кладём caption
+
 		media := make([]models.InputMedia, 0, len(form.Photos))
 		for i, fileID := range form.Photos {
 			if i == 0 {
@@ -494,20 +484,18 @@ func sendFormToAdmin(ctx context.Context, b *bot.Bot, form *UserForm, userID int
 			}
 		}
 
-		// Отправляем медиагруппу
 		b.SendMediaGroup(ctx, &bot.SendMediaGroupParams{
 			ChatID: adminID,
 			Media:  media,
 		})
 
-		// После медиа — отправляем кнопку отдельным сообщением
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID:      adminID,
 			Text:        "⬆️ Заявка выше",
 			ReplyMarkup: kb,
 		})
 	} else {
-		// Если фото нет — отправляем просто текст с кнопкой
+
 		b.SendMessage(ctx, &bot.SendMessageParams{
 			ChatID:      adminID,
 			Text:        text,
@@ -516,7 +504,6 @@ func sendFormToAdmin(ctx context.Context, b *bot.Bot, form *UserForm, userID int
 	}
 }
 
-// Сообщение по умолчанию
 func defaultHandler(ctx context.Context, b *bot.Bot, update *models.Update) {
 	if update.Message != nil {
 		b.SendMessage(ctx, &bot.SendMessageParams{
